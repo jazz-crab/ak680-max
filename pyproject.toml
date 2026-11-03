@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ak680-max"
+version = "1.0.0"
+description = "Reproducible AJAZZ AK680 MAX configuration over HID (Windows, firmware v306)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "hidapi>=0.14.0",
+    "Pillow>=10.0",
+]
+
+[project.scripts]
+ak680 = "ak680_max.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
