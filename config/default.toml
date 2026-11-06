@@ -34,7 +34,10 @@ precision = 100
 
 [lighting]
 enabled = true
-slot = 0
+# Прошивка после холодного старта может сама переключиться на слот 1, поэтому
+# держим рисунок именно там: иначе клавиши остаются тёмными, хотя режим LED
+# всё ещё UserPicture.
+slot = 1
 mode = 13          # UserPicture
 speed = 4
 brightness = 4

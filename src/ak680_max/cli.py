@@ -138,6 +138,12 @@ def collect_checks(st: dict, cfg: Config, want_pic: bytes | None,
         mode = led[1] if len(led) >= 2 else None
         checks.append((f"режим LED {cfg.lighting.mode}", mode == cfg.lighting.mode,
                        f"{mode}"))
+        want_option = (cfg.lighting.slot << 4) & 0xF0
+        option = led[4] if len(led) >= 5 else None
+        checks.append((f"слот LED {cfg.lighting.slot}",
+                       option == want_option,
+                       f"0x{option:02X} (ожидалось 0x{want_option:02X})"
+                       if option is not None else "нет данных"))
     return checks
 
 
@@ -206,7 +212,11 @@ def cmd_apply(kb: Keyboard, cfg: Config, args) -> int:
 
     if want_pic:
         print("== 4/4. Подсветка (userpic по клавишам + режим) ==")
-        kb.set_userpic(cfg.lighting.slot, want_pic)
+        ok = kb.set_userpic(cfg.lighting.slot, want_pic)
+        print(f"  userpic слот {cfg.lighting.slot}: "
+              f"{'OK' if ok else 'НЕ ПОДТВЕРДИЛОСЬ'}")
+        if not ok:
+            failures.append("userpic")
         kb.set_led_userpic(cfg.lighting.slot, cfg.lighting.mode,
                            cfg.lighting.speed, cfg.lighting.brightness,
                            cfg.lighting.flash_rgb)
@@ -258,7 +268,8 @@ def cmd_restore(kb: Keyboard, cfg: Config, args) -> int:
         return 0
 
     print("\n== Восстановление ==")
-    result = restore_state(kb, st, key_count=KEY_COUNT, userpic_slot=0)
+    result = restore_state(kb, st, key_count=KEY_COUNT,
+                           userpic_slot=cfg.lighting.slot)
     print(f"\nЗаписано полей: {result['written']}, ошибок: {result['failed']}")
     return 0 if result["failed"] == 0 else 1
 

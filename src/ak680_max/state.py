@@ -175,9 +175,13 @@ def restore_state(kb, st: dict, key_count: int = KEY_COUNT,
         log(f"  отпускание: {sorted(set(st['release_raw']))}")
 
     if st.get("userpic_slot0"):
-        kb.set_userpic(userpic_slot, bytes.fromhex(st["userpic_slot0"]))
-        result["written"] += 1
-        log("  userpic восстановлен")
+        ok = kb.set_userpic(userpic_slot, bytes.fromhex(st["userpic_slot0"]))
+        if ok:
+            result["written"] += 1
+            log("  userpic восстановлен")
+        else:
+            result["failed"] += 1
+            log("  userpic НЕ подтвердился после повторов")
         led_hex = st.get("led") or ""
         if len(led_hex) >= 16:
             kb.set_led_params(bytes.fromhex(led_hex)[1:8])

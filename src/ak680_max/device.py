@@ -210,14 +210,25 @@ class Keyboard:
             data = bytes([sub, 0x01, page, is_last, 0, 0, 0]) + chunk
             self.send(CMD_SET_MULTI_MAGNETISM, data, delay=0.25 if is_last else 0.03)
 
-    def set_userpic(self, slot, data):
+    def set_userpic(self, slot, data, tries=6):
+        """Write one userpic slot and verify it.
+
+        The firmware sometimes drops back-to-back page writes, so a single
+        pass can leave the slot half-filled (the keyboard then shows a dark
+        or partial picture while the LED mode still says UserPicture).
+        """
         slot_data = bytes(data[:USERPIC_BYTES]).ljust(USERPIC_BYTES, b"\x00")
         pages = (USERPIC_BYTES + 55) // 56
-        for page in range(pages):
-            chunk = slot_data[page * 56:(page + 1) * 56]
-            payload = bytes([slot, 0xFF, page, len(chunk),
-                             1 if page == pages - 1 else 0, 0, 0]) + chunk
-            self.send(CMD_SET_USERPIC, payload, delay=0.012)
+        for _ in range(tries):
+            for page in range(pages):
+                chunk = slot_data[page * 56:(page + 1) * 56]
+                payload = bytes([slot, 0xFF, page, len(chunk),
+                                 1 if page == pages - 1 else 0, 0, 0]) + chunk
+                self.send(CMD_SET_USERPIC, payload, delay=0.012)
+            time.sleep(0.2)
+            if self.get_userpic(slot) == slot_data:
+                return True
+        return False
 
     def set_led_params(self, params):
         """Write the 7 LED parameters [mode, speed, brightness, option, r, g, b]."""
